@@ -1,0 +1,46 @@
+create database student_management;
+
+go
+  
+create table student_details(
+id bigint not null,
+name varchar(100) not null,
+age int not null,
+department varchar(200) not null,
+email varchar(200) not null,
+phone varchar(20) not null,
+constraint student_pk primary key(id)
+);
+
+go
+
+create table student_marks(
+id BIGINT NOT NULL,
+DSA int,
+DBMS int,
+OS int,
+Computer_Network int,
+Mathematics int,
+Total_marks int,
+percentage varchar(10),
+Grade char(1),
+CGPA varchar(10),
+CONSTRAINT student_marks_pk PRIMARY KEY (id),
+
+ CONSTRAINT student_marks_fk
+ FOREIGN KEY (id)
+ REFERENCES student_details(id)
+);
+
+GO
+
+create table student_attendance(
+id bigint not null,
+Total_classes int not null,
+Present_classes int,
+constraint student_attendance_pk primary key(id),
+
+constraint student_attendance_fk
+foreign key (id)
+references student_details(id)
+);
