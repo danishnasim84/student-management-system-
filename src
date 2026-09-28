@@ -1,0 +1,1234 @@
+//STUDENT MANAGEMENT SYSTEM
+#include<iostream>
+#include<vector>
+#include<string>
+#include<fstream>
+#include <windows.h>
+#include <sql.h>
+#include <sqlext.h>
+using namespace std;
+void showSQLError(SQLHANDLE handle, SQLSMALLINT type)
+{
+    SQLCHAR sqlState[6];
+    SQLCHAR message[1024];
+    SQLINTEGER nativeError;
+    SQLSMALLINT messageLength;
+
+    SQLRETURN ret;
+    int i = 1;
+
+    while ((ret = SQLGetDiagRecA(
+                type,
+                handle,
+                i,
+                sqlState,
+                &nativeError,
+                message,
+                sizeof(message),
+                &messageLength)) != SQL_NO_DATA)
+    {
+        cout << "SQL State: " << sqlState << endl;
+        cout << "Error: " << message << endl;
+        i++;
+    }
+}
+SQLHENV environment = NULL;
+SQLHDBC connection = NULL;
+
+bool connectToSQL()
+{
+    SQLRETURN ret;
+
+    // Allocate environment
+    ret = SQLAllocHandle(
+        SQL_HANDLE_ENV,
+        SQL_NULL_HANDLE,
+        &environment
+    );
+
+    if (!SQL_SUCCEEDED(ret))
+    {
+        cout << "Failed to allocate SQL environment." << endl;
+        return false;
+    }
+
+    // Set ODBC version
+    ret = SQLSetEnvAttr(
+        environment,
+        SQL_ATTR_ODBC_VERSION,
+        (SQLPOINTER)SQL_OV_ODBC3,
+        0
+    );
+
+    if (!SQL_SUCCEEDED(ret))
+    {
+        cout << "Failed to set ODBC version." << endl;
+        return false;
+    }
+
+    // Allocate connection
+    ret = SQLAllocHandle(
+        SQL_HANDLE_DBC,
+        environment,
+        &connection
+    );
+
+    if (!SQL_SUCCEEDED(ret))
+    {
+        cout << "Failed to allocate SQL connection." << endl;
+        return false;
+    }
+
+    // SQL Server connection string
+    SQLCHAR connectionString[] =
+        "DRIVER={ODBC Driver 18 for SQL Server};"
+        "SERVER=DANISH\\SQLEXPRESS;"
+        "DATABASE=student_management;"
+        "Trusted_Connection=yes;"
+        "TrustServerCertificate=yes;";
+
+    SQLCHAR outputString[1024];
+    SQLSMALLINT outputLength;
+
+    // Connect
+    ret = SQLDriverConnectA(
+        connection,
+        NULL,
+        connectionString,
+        SQL_NTS,
+        outputString,
+        sizeof(outputString),
+        &outputLength,
+        SQL_DRIVER_NOPROMPT
+    );
+
+    if (SQL_SUCCEEDED(ret))
+    {
+        cout << "\nConnected to SQL Server successfully!\n";
+        return true;
+    }
+    else
+    {
+        cout << "\nSQL Server connection failed!\n";
+        showSQLError(connection, SQL_HANDLE_DBC);
+        return false;
+    }
+}
+void disconnectFromSQL()
+{
+    if (connection != NULL)
+    {
+        SQLDisconnect(connection);
+        SQLFreeHandle(SQL_HANDLE_DBC, connection);
+        connection = NULL;
+    }
+
+    if (environment != NULL)
+    {
+        SQLFreeHandle(SQL_HANDLE_ENV, environment);
+        environment = NULL;
+    }
+}
+class student//class student
+{
+private://properties of studentad
+    long long id;
+    string name;
+    int age;
+    string department;
+    string email;
+    string phone;
+     int dsa;
+     int dbms;
+     int os;
+     int cn;
+     int mathematics;
+     long long totalclasses;
+     long long presentclasses;
+    public://input student properties
+    long long getid() const
+{
+    return id;
+}
+
+string getName() const
+{
+    return name;
+}
+
+int getAge() const
+{
+    return age;
+}
+
+string getDepartment() const
+{
+    return department;
+}
+
+string getEmail() const
+{
+    return email;
+}
+
+string getPhone() const
+{
+    return phone;
+}
+int getDSA() const
+{
+    return dsa;
+}
+
+int getDBMS() const
+{
+    return dbms;
+}
+
+int getOS() const
+{
+    return os;
+}
+
+int getCN() const
+{
+    return cn;
+}
+
+int getMathematics() const
+{
+    return mathematics;
+}
+long long getTotalClasses() const
+{
+    return totalclasses;
+}
+
+long long getPresentClasses() const
+{
+    return presentclasses;
+}
+
+
+    void inputstudent(long long studentID)
+    {
+        id=studentID;
+
+        cout << "Enter Name: ";
+        cin.ignore();
+        getline(cin,name);
+
+        cout << "Enter Age: ";
+        cin>> age;
+        while(age <=0 || age >100)
+        {
+            cout << "Invalid age! Enter age between 1 and 100: ";
+            cin >> age;
+        }
+
+        cout << "Enter Department: ";
+        cin.ignore();
+        getline(cin,department);
+
+        cout << "Enter Email: ";
+        cin >> email;
+
+        cout << "Enter Phone: ";
+        cin >> phone;
+    }
+    void inputMarks(long long id)
+{
+    cout << "\nEnter DSA Marks: ";
+    cin >> dsa;
+    while (dsa < 0 || dsa > 100)
+    {
+        cout<<"Invalid dsa mark! Enter marks between 0 and 100: ";
+        cin>>dsa;
+    }
+
+    cout << "Enter DBMS Marks: ";
+    cin >> dbms;
+    while (dbms < 0 || dbms > 100)
+    {
+        cout<<"Invalid dbms mark! Enter marks between 0 and 100: ";
+        cin>>dbms;
+    }
+
+    cout << "Enter Operating System Marks: ";
+    cin >> os;
+    while (os < 0 || os > 100)
+    {
+        cout<<"Invalid os mark! Enter marks between 0 and 100: ";
+        cin>>os;
+    }
+
+    cout << "Enter Computer Networks Marks: ";
+    cin >> cn;
+    while (cn < 0 || cn > 100)
+    {
+        cout<<"Invalid cn mark! Enter marks between 0 and 100: ";
+        cin>>cn;
+    }
+
+    cout << "Enter Mathematics Marks: ";
+    cin >> mathematics;
+    while (mathematics < 0 || mathematics > 100)
+    {
+        cout<<"Invalid mathematics mark! Enter marks between 0 and 100: ";
+        cin>>mathematics;
+    }
+}
+int getTotal() const
+{
+    return dsa + dbms + os + cn + mathematics;
+}
+
+float getPercentage() const
+{
+    return (getTotal() / 500.0) * 100;
+}
+
+char getGrade() const
+{
+    float percentage = getPercentage();
+
+    if(percentage >= 90)
+        return 'A';
+
+    else if(percentage >= 80)
+        return 'B';
+
+    else if(percentage >= 70)
+        return 'C';
+
+    else if(percentage >= 60)
+        return 'D';
+
+    else if(percentage >= 50)
+        return 'E';
+
+    else
+        return 'F';
+}
+
+float getCGPA() const
+{
+    return getPercentage() / 9.5;
+}
+    void displaystudent()//display student in ouptut
+{
+    cout << "\n-------------------------\n";
+    cout << "Student ID : " << id << endl;
+    cout << "Name       : " << name << endl;
+    cout << "Age        : " << age << endl;
+    cout << "Department : " << department << endl;
+    cout << "Email      : " << email << endl;
+    cout << "Phone      : " << phone << endl;
+    cout << "-------------------------\n";
+}
+void displayresult(long long id)
+{
+    cout << "\n========== ACADEMIC DETAILS ==========\n";
+
+    cout << "DSA              : " << dsa << endl;
+    cout << "DBMS             : " << dbms << endl;
+    cout << "Operating System : " << os << endl;
+    cout << "Computer Network : " << cn << endl;
+    cout << "Mathematics      : " << mathematics << endl;
+
+    cout << "---------------------------------------\n";
+
+    cout << "Total Marks      : " << getTotal() << "/500" << endl;
+    cout << "Percentage       : " << getPercentage() << "%" << endl;
+    cout << "Grade            : " << getGrade() << endl;
+    cout << "CGPA             : " << getCGPA() << endl;
+
+    cout << "=======================================\n";
+}
+void updatestudent()//updatation of student properties if required
+{
+    cout << "Enter new name: ";
+    cin.ignore();
+    getline(cin,name);
+
+    cout << "Enter new age: ";
+    cin >> age;
+
+    cin.ignore();
+
+    cout << "Enter new department: ";
+    getline(cin,department);
+
+    cout << "Enter new email: ";
+    cin >> email;
+
+    cout << "Enter new phone: "; 
+    cin >> phone;
+}
+void inputattendance()
+{
+   cout << "\nEnter Total Classes: ";
+    cin >> totalclasses;
+    while(totalclasses <40 || totalclasses >52)
+    {
+        cout<<"Invalid Attendance! Enter totalclasses between 40 and 100: ";
+        cin>>totalclasses;
+    }
+
+    cout << "Enter Present Classes: ";
+    cin >> presentclasses;
+    while(presentclasses <=0 || presentclasses >52)
+    {
+        cout<<"Invalid Attendance! Enter present classes: ";
+        cin>>presentclasses;
+    }
+}
+float getattendance()
+{
+    return presentclasses * 100.0 / totalclasses;
+}
+void displayattendance()
+{
+    cout << "\n========== ATTENDANCE ==========\n";
+
+    cout << "Total Classes   : " << totalclasses << endl;
+    cout << "Present Classes : " << presentclasses << endl;
+
+    cout << "Attendance      : "
+         << getattendance() << "%" << endl;
+
+    if(getattendance() < 75)
+    {
+        cout << "WARNING: Attendance is below 75%!" << endl;
+    }
+    else
+    {
+        cout << "Attendance Status: GOOD" << endl;
+    }
+
+    cout << "================================\n";
+}
+ void savetofile(ofstream &file)
+ {
+    file << id << endl;
+    file << name << endl;
+    file << age << endl;
+    file << department << endl;
+    file << email << endl;
+    file << phone << endl;
+    file << dsa << endl;         
+    file << dbms << endl;
+    file << os << endl; 
+    file << cn << endl;
+    file << mathematics << endl;
+    file << totalclasses << endl;
+    file << presentclasses << endl;
+ }
+ bool loadfromfile(ifstream &file)
+{
+    if(!(file >> id))
+    {
+        return false;
+    }
+
+    file.ignore();
+
+    if(!getline(file, name))
+    {
+        return false;
+    }
+
+    if(!(file >> age))
+    {
+        return false;
+    }
+
+    file.ignore();
+
+    if(!getline(file, department))
+    {
+        return false;
+    }
+
+    if(!(file >> email))
+    {
+        return false;
+    }
+
+    if(!(file >> phone))
+    {
+        return false;
+    }
+    if(!(file >> dsa))
+    {
+        return false;
+    }
+    if(!(file >> dbms))
+    {
+        return false;
+    }
+    if(!(file >> os))
+    {
+        return false;
+    }
+    if(!(file >> cn))
+    {
+        return false;
+    }
+    if(!(file >> mathematics))
+    {
+        return false;
+    }
+    if (!(file >> totalclasses))
+    {
+        return false;
+    }
+    if(!(file >> presentclasses))
+    {
+        return false;
+    }
+    return true;
+}
+};
+bool insertStudentIntoSQL(const student& s)
+{
+    SQLHSTMT statement = NULL;
+
+    SQLRETURN ret = SQLAllocHandle(
+        SQL_HANDLE_STMT,
+        connection,
+        &statement
+    );
+
+    if(!SQL_SUCCEEDED(ret))
+    {
+        cout << "Failed to create SQL statement." << endl;
+        return false;
+    }
+
+    SQLCHAR query[] =
+        "INSERT INTO student_details "
+        "(id, name, age, department, email, phone) "
+        "VALUES (?, ?, ?, ?, ?, ?)";
+
+    ret = SQLPrepareA(
+        statement,
+        query,
+        SQL_NTS
+    );
+
+    if(!SQL_SUCCEEDED(ret))
+    {
+        cout << "Failed to prepare SQL query." << endl;
+        showSQLError(statement, SQL_HANDLE_STMT);
+
+        SQLFreeHandle(SQL_HANDLE_STMT, statement);
+
+        return false;
+    }
+
+    long long id = s.getid();
+    string name = s.getName();
+    int age = s.getAge();
+    string department = s.getDepartment();
+    string email = s.getEmail();
+    string phone = s.getPhone();
+
+    SQLLEN idLength = 0;
+    SQLLEN nameLength = (SQLLEN)name.length();
+    SQLLEN ageLength = 0;
+    SQLLEN departmentLength = (SQLLEN)department.length();
+    SQLLEN emailLength = (SQLLEN)email.length();
+    SQLLEN phoneLength = (SQLLEN)phone.length();
+
+    SQLBindParameter(
+        statement, 1, SQL_PARAM_INPUT,
+        SQL_C_SBIGINT, SQL_BIGINT,
+        0, 0, &id, 0, &idLength
+    );
+
+    SQLBindParameter(
+        statement, 2, SQL_PARAM_INPUT,
+        SQL_C_CHAR, SQL_VARCHAR,
+        100, 0,
+        (SQLPOINTER)name.c_str(),
+        (SQLLEN)name.length() + 1,
+        &nameLength
+    );
+
+    SQLBindParameter(
+        statement, 3, SQL_PARAM_INPUT,
+        SQL_C_LONG, SQL_INTEGER,
+        0, 0, &age, 0, &ageLength
+    );
+
+    SQLBindParameter(
+        statement, 4, SQL_PARAM_INPUT,
+        SQL_C_CHAR, SQL_VARCHAR,
+        200, 0,
+        (SQLPOINTER)department.c_str(),
+        (SQLLEN)department.length() + 1,
+        &departmentLength
+    );
+
+    SQLBindParameter(
+        statement, 5, SQL_PARAM_INPUT,
+        SQL_C_CHAR, SQL_VARCHAR,
+        200, 0,
+        (SQLPOINTER)email.c_str(),
+        (SQLLEN)email.length() + 1,
+        &emailLength
+    );
+
+    SQLBindParameter(
+        statement, 6, SQL_PARAM_INPUT,
+        SQL_C_CHAR, SQL_VARCHAR,
+        20, 0,
+        (SQLPOINTER)phone.c_str(),
+        (SQLLEN)phone.length() + 1,
+        &phoneLength
+    );
+
+    ret = SQLExecute(statement);
+
+    if(!SQL_SUCCEEDED(ret))
+    {
+        cout << "\nFailed to insert student into SQL Server.\n";
+        showSQLError(statement, SQL_HANDLE_STMT);
+
+        SQLFreeHandle(SQL_HANDLE_STMT, statement);
+
+        return false;
+    }
+
+    SQLFreeHandle(SQL_HANDLE_STMT, statement);
+
+    return true;
+}
+  bool insertMarksIntoSQL(const student& s)
+{
+    SQLHSTMT statement = NULL;
+
+    SQLRETURN ret = SQLAllocHandle(
+        SQL_HANDLE_STMT,
+        connection,
+        &statement
+    );
+
+    if(!SQL_SUCCEEDED(ret))
+    {
+        cout << "Failed to create SQL statement." << endl;
+        return false;
+    }
+
+    SQLCHAR query[] =
+        "INSERT INTO student_marks "
+        "(id, DSA, DBMS, OS, Computer_Network, Mathematics, "
+        "Total_marks, percentage, Grade, CGPA) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+    ret = SQLPrepareA(
+        statement,
+        query,
+        SQL_NTS
+    );
+
+    if(!SQL_SUCCEEDED(ret))
+    {
+        cout << "Failed to prepare marks SQL query." << endl;
+        showSQLError(statement, SQL_HANDLE_STMT);
+
+        SQLFreeHandle(SQL_HANDLE_STMT, statement);
+
+        return false;
+    }
+
+    long long id = s.getid();
+
+    int dsa = s.getDSA();
+    int dbms = s.getDBMS();
+    int os = s.getOS();
+    int cn = s.getCN();
+    int mathematics = s.getMathematics();
+
+    int total = s.getTotal();
+    float percentage = s.getPercentage();
+
+    char grade[2];
+    grade[0] = s.getGrade();
+    grade[1] = '\0';
+    float cgpa = s.getCGPA();
+
+    SQLLEN idLength = 0;
+    SQLLEN dsaLength = 0;
+    SQLLEN dbmsLength = 0;
+    SQLLEN osLength = 0;
+    SQLLEN cnLength = 0;
+    SQLLEN mathematicsLength = 0;
+    SQLLEN totalLength = 0;
+    SQLLEN percentageLength = 0;
+    SQLLEN gradeLength = 1;
+    SQLLEN cgpaLength = 0;
+
+    SQLBindParameter(
+        statement, 1, SQL_PARAM_INPUT,
+        SQL_C_SBIGINT, SQL_BIGINT,
+        0, 0, &id, 0, &idLength
+    );
+
+    SQLBindParameter(
+        statement, 2, SQL_PARAM_INPUT,
+        SQL_C_LONG, SQL_INTEGER,
+        0, 0, &dsa, 0, &dsaLength
+    );
+
+    SQLBindParameter(
+        statement, 3, SQL_PARAM_INPUT,
+        SQL_C_LONG, SQL_INTEGER,
+        0, 0, &dbms, 0, &dbmsLength
+    );
+
+    SQLBindParameter(
+        statement, 4, SQL_PARAM_INPUT,
+        SQL_C_LONG, SQL_INTEGER,
+        0, 0, &os, 0, &osLength
+    );
+
+    SQLBindParameter(
+        statement, 5, SQL_PARAM_INPUT,
+        SQL_C_LONG, SQL_INTEGER,
+        0, 0, &cn, 0, &cnLength
+    );
+
+    SQLBindParameter(
+        statement, 6, SQL_PARAM_INPUT,
+        SQL_C_LONG, SQL_INTEGER,
+        0, 0, &mathematics, 0, &mathematicsLength
+    );
+
+    SQLBindParameter(
+        statement, 7, SQL_PARAM_INPUT,
+        SQL_C_LONG, SQL_INTEGER,
+        0, 0, &total, 0, &totalLength
+    );
+
+    SQLBindParameter(
+        statement, 8, SQL_PARAM_INPUT,
+        SQL_C_FLOAT, SQL_DECIMAL,
+        5, 2, &percentage, 0, &percentageLength
+    );
+
+    SQLBindParameter(
+    statement, 9, SQL_PARAM_INPUT,
+    SQL_C_CHAR, SQL_CHAR,
+    1, 0, grade, sizeof(grade), &gradeLength
+    );
+
+    SQLBindParameter(
+        statement, 10, SQL_PARAM_INPUT,
+        SQL_C_FLOAT, SQL_DECIMAL,
+        3, 2, &cgpa, 0, &cgpaLength
+    );
+
+    ret = SQLExecute(statement);
+
+    if(!SQL_SUCCEEDED(ret))
+    {
+        cout << "\nFailed to insert marks into SQL Server.\n";
+        showSQLError(statement, SQL_HANDLE_STMT);
+
+        SQLFreeHandle(SQL_HANDLE_STMT, statement);
+
+        return false;
+    }
+
+    SQLFreeHandle(SQL_HANDLE_STMT, statement);
+
+    return true;
+}
+bool insertAttendanceIntoSQL(const student& s)
+{
+    SQLHSTMT statement = NULL;
+
+    SQLRETURN ret = SQLAllocHandle(
+        SQL_HANDLE_STMT,
+        connection,
+        &statement
+    );
+
+    if(!SQL_SUCCEEDED(ret))
+    {
+        cout << "Failed to create SQL statement." << endl;
+        return false;
+    }
+
+    SQLCHAR query[] =
+        "INSERT INTO student_attendance "
+        "(id, Total_classes, Present_classes) "
+        "VALUES (?, ?, ?)";
+
+    ret = SQLPrepareA(
+        statement,
+        query,
+        SQL_NTS
+    );
+
+    if(!SQL_SUCCEEDED(ret))
+    {
+        cout << "Failed to prepare attendance SQL query." << endl;
+        showSQLError(statement, SQL_HANDLE_STMT);
+
+        SQLFreeHandle(SQL_HANDLE_STMT, statement);
+
+        return false;
+    }
+
+    long long id = s.getid();
+
+int totalClasses = (int)s.getTotalClasses();
+int presentClasses = (int)s.getPresentClasses();
+
+SQLLEN idLength = 0;
+SQLLEN totalClassesLength = 0;
+SQLLEN presentClassesLength = 0;
+
+    SQLBindParameter(
+        statement, 1, SQL_PARAM_INPUT,
+        SQL_C_SBIGINT, SQL_BIGINT,
+        0, 0, &id, 0, &idLength
+    );
+
+    SQLBindParameter(
+        statement, 2, SQL_PARAM_INPUT,
+        SQL_C_LONG, SQL_INTEGER,
+        0, 0, &totalClasses, 0, &totalClassesLength
+    );
+
+    SQLBindParameter(
+        statement, 3, SQL_PARAM_INPUT,
+        SQL_C_LONG, SQL_INTEGER,
+        0, 0, &presentClasses, 0, &presentClassesLength
+    );
+
+    ret = SQLExecute(statement);
+
+    if(!SQL_SUCCEEDED(ret))
+    {
+        cout << "\nFailed to insert attendance into SQL Server.\n";
+        showSQLError(statement, SQL_HANDLE_STMT);
+
+        SQLFreeHandle(SQL_HANDLE_STMT, statement);
+
+        return false;
+    }
+
+    SQLFreeHandle(SQL_HANDLE_STMT, statement);
+
+    return true;
+}
+// SAVE ALL STUDENTS
+void saveAllStudents(vector<student> &students)
+{
+    ofstream file(
+        "C:\\Users\\Danish Nasim\\OneDrive\\Desktop\\students.txt"
+    );
+
+
+    if(!file)
+    {
+        cout << "\nError: File could not be opened.\n";
+        return;
+    }
+
+
+    for(int i = 0; i < students.size(); i++)
+    {
+        students[i].savetofile(file);
+    }
+
+
+    file.close();
+}
+bool idExists(vector<student> &students, long long id)
+{
+    for(int i = 0; i < students.size(); i++)
+    {
+        if(students[i].getid() == id)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+ // LOAD ALL STUDENTS
+void loadAllStudents(vector<student> &students)
+{
+    ifstream file(
+        "C:\\Users\\Danish Nasim\\OneDrive\\Desktop\\students.txt"
+    );
+
+
+    // If file doesn't exist
+    if(!file)
+    {
+        return;
+    }
+
+
+    while(true)
+    {
+        student s;
+
+        if(!s.loadfromfile(file))
+        {
+            break;
+        }
+
+        if(!idExists(students, s.getid()))
+        {
+            students.push_back(s);
+        }
+    }
+
+    file.close();
+}
+bool login()
+    {
+    string username;
+    string password;
+    cout<<"\n======== LOGIN ========\n";
+
+    for(int attempt=1; attempt <=3;attempt++)
+{
+    cout<<"Enter Username: ";
+    cin>>username;
+
+    cout<<" Enter Password: ";
+    cin>>password;
+
+    if(username == "admin" && password == "1234")
+    {
+        cout<<"\n Login Successful!\n";
+        return true;
+    }
+
+        cout<<"\nInvalid username or password!\n";
+        
+        cout << "Attempts remaining: " << 3 - attempt << endl;
+}
+        cout<<"\nToo many failed attempts. Access denied!\n";
+        
+        return false;
+    }
+int main()
+{
+    if(!login())
+    {
+        return 0;
+    }
+
+    // Connect to SQL Server
+    if(!connectToSQL())
+    {
+        return 0;
+    }
+    vector<student>students;
+    int choice;
+
+    loadAllStudents(students);
+
+    while(true)
+{
+      cout << "\n====================================\n";
+        cout << "      STUDENT MANAGEMENT SYSTEM\n";
+        cout << "====================================\n";
+
+        cout << "1. Add Student\n";
+        cout << "2. Display All Students\n";
+        cout << "3. Search Student\n";
+        cout << "4. Update Student\n";
+        cout << "5. Delete Student\n";
+        cout << "6. Add Marks\n";
+        cout << "7. Display Result\n";
+        cout << "8. Add Attendance\n";
+        cout << "9. Display Attendance\n";
+        cout << "10. Logout\n";
+        cout << "11. Exit\n";
+        cout << "====================================\n";
+        cout << "Enter your choice: ";
+        cin >> choice; 
+        
+             switch(choice)
+       {
+           case 1:
+{
+    long long newID;
+
+    cout << "Enter Student ID: ";
+    cin >> newID;
+
+    if(idExists(students, newID))
+    {
+        cout << "\nERROR: Student ID already exists!";
+        cout << "\nStudent was NOT added.\n";
+    }
+    else
+    {
+        student s;
+        s.inputstudent(newID);
+
+        if(insertStudentIntoSQL(s))
+        {
+            students.push_back(s);
+            saveAllStudents(students);
+
+            cout << "\nStudent added successfully!\n";
+            cout << "Student data saved to SQL Server.\n";
+        }
+        else
+        {
+            cout << "\nStudent was NOT added.\n";
+        }
+    }
+
+    break;
+}
+        case 2:
+        {
+            if(students.empty())
+            {
+    cout<<"\nNo student available\n";
+            }
+            else
+      {
+             cout << "\n===== ALL STUDENTS =====\n";   
+            
+             for(int i=0;i<students.size();i++)
+    {
+        students[i].displaystudent();
+    }
+     }
+         break;
+        }
+    case 3:
+{
+    long long searchid;
+    cout<<"Enter stident id to search :";
+    cin>>searchid;
+    bool found = false;
+    for(int i=0;i<students.size();i++)
+    {
+        if(students[i].getid() == searchid)
+        {
+           cout<<"\n==== STUDENT FOUND ====\n";
+           students[i].displaystudent();
+           found = true;
+           break; 
+        }
+    }
+    if(found==false)
+    {
+        cout<<"\nSTUDENT NOT FOUND.\n";
+    }
+        break;
+}
+    case 4:
+       {
+      long long updateid;
+    cout<<"Enter Student ID to update :";
+    cin>>updateid;
+    bool found = false;
+    for(int i=0;i<students.size();i++)
+    {
+        if(students[i].getid()==updateid)
+        {
+            students[i].updatestudent();
+            // SAVE UPDATED DATA
+                    saveAllStudents(students);
+            found=true;
+             cout << "\nStudent updated successfully!\n";
+            break;
+        }
+    }
+    if(found==false)
+    {
+        cout<<"STUDENT NOT FOUND"<<endl;
+    }
+        break;
+       }
+    case 5:
+        {
+      long long deleteid;
+    cout<<"\nEnter Student ID to Delete :";
+    cin>>deleteid;
+    bool found=false;
+    for(int i=0;i<students.size();i++)
+    {
+        if(students[i].getid()==deleteid)
+        {
+            students.erase(students.begin()+i);
+            // SAVE AFTER DELETING
+                    saveAllStudents(students);
+            found=true;
+            cout << "Student deleted successfully.\n";
+            break;
+        }
+    }
+    if(found==false)
+    {
+        cout<<"Student not found."<<endl;
+    }
+         break;
+        }
+        case 6:
+{
+    long long id;
+
+    cout << "Enter Student ID: ";
+    cin >> id;
+
+    bool found = false;
+
+    for(int i = 0; i < students.size(); i++)
+    {
+        if(students[i].getid() == id)
+        {
+            students[i].inputMarks(id);
+
+            if(insertMarksIntoSQL(students[i]))
+            {
+                saveAllStudents(students);
+
+                cout << "\nMarks added successfully!\n";
+                cout << "Marks data saved to SQL Server.\n";
+            }
+            else
+            {
+                cout << "\nMarks were NOT saved to SQL Server.\n";
+            }
+
+            found = true;
+            break;
+        }
+    }
+
+    if(found == false)
+    {
+        cout << "Student not found!" << endl;
+    }
+
+    break;
+}
+    case 7:
+    {
+      long long id;
+    cout<<"Enter Student ID :";
+    cin>>id;
+    bool found =false;
+    for(int i = 0; i < students.size(); i++)
+    {
+        if(students[i].getid() == id)
+        {
+            students[i].displayresult(id);
+
+            found = true;
+
+            break;
+        }
+    }
+
+    if(found == false)
+    {
+        cout << "Student not found!" << endl;
+    }
+       break;
+    }
+    case 8:
+{
+    long long id;
+
+    cout << "Enter Student ID : ";
+    cin >> id;
+
+    bool found = false;
+
+    for(int i = 0; i < students.size(); i++)
+    {
+        if(students[i].getid() == id)
+        {
+            students[i].inputattendance();
+
+            if(insertAttendanceIntoSQL(students[i]))
+            {
+                saveAllStudents(students);
+
+                cout << "Attendance added successfully!" << endl;
+                cout << "Attendance data saved to SQL Server." << endl;
+            }
+            else
+            {
+                cout << "Attendance was NOT saved to SQL Server." << endl;
+            }
+
+            found = true;
+            break;
+        }
+    }
+
+    if(found == false)
+    {
+        cout << "Student not found!" << endl;
+    }
+
+    break;
+}
+    case 9:
+    {
+      long long id;
+        cout << "Enter Student ID :";
+        cin >>id;
+        bool found = false;
+
+    for(int i = 0; i < students.size(); i++)
+    {
+        if(students[i].getid() == id)
+        {
+            students[i].displayattendance();
+            found = true;
+
+            break;
+        }
+    }
+
+    if(found == false)
+    {
+        cout << "Student not found!" << endl;
+    }
+       break;
+}
+    case 10:
+    {
+        cout<<" You have Sucessfully Logout from the System :";
+        
+        login();
+        break;
+    }
+
+    case 11:
+    {
+        cout<<"You Have Sucessfully Exit From your Student Management System :";
+        disconnectFromSQL();
+        return 0;
+    }
+        default:
+        {
+            cout << "\nInvalid choice! Please try again.\n";
+        }
+    
+    }
+}
+
+}
+
+
